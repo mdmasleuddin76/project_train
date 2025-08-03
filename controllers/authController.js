@@ -8,13 +8,13 @@ import config from "../config/config.js";
 const sendTokenResponse = (user, statusCode, res) => {
   const payload = { user: { id: user.id } };
   const token = jwt.sign(payload, config.jwtSecret, { expiresIn: "1h" });
-  const options = {
-     httpOnly: true,
-     secure: false, // Must be false for HTTP (localhost)
-     sameSite: 'lax', // Good default for development
-     expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
-     path: '/', // Make cookie available on all routes
-     };
+ const options = {
+  httpOnly: true,
+  secure: true,             // ✅ must be true in production (Render uses HTTPS)
+  sameSite: 'none',         // ✅ required for cross-site cookies
+  expires: new Date(Date.now() + 24*60 * 60 * 1000), // 1 hour
+  path: '/',
+};
   const userData = { id: user.id, name: user.name, email: user.email };
 
   res
