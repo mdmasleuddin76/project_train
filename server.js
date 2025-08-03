@@ -17,7 +17,7 @@ const app = express();
 
 
 const corsOptions = {
-  origin: 'http://localhost:5173', // ✅ exact frontend domain
+  origin: 'https://codepathways.tech', // ✅ exact frontend domain
   credentials: true, // ✅ allow cookies to be sent
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
