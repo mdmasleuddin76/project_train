@@ -340,7 +340,35 @@ export const getDashboard = async (req, res) => {
               return { ...stock, currentValue: 0, gain: 0, dayChange: 0, dayChangePercent: 0, name: stock.stockName };
           }
       }));
-
+      const enrichedGold = await Promise.all(
+        gold.map(async (gold) => {
+          try {
+            const url = `https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1m&range=1d`;
+            const response = await axios.get(url);
+            const livePricePerOunce = response.data.chart.result?.[0]?.meta?.regularMarketPrice;
+  
+            if (livePricePerOunce == null) throw new Error("Price not available from API");
+            
+            const livePricePerGram = livePricePerOunce / 31.1035;
+            const initialInvestment = gold.quantityInGrams * gold.purchasePricePerGram;
+            const currentValue = gold.quantityInGrams * livePricePerGram;
+            const totalGain = currentValue - initialInvestment;
+            const gainPercent = (totalGain / initialInvestment) * 100;
+  
+            return {
+              ...gold,
+              livePricePerGram: parseFloat(livePricePerGram.toFixed(2)),
+              currentValue: parseFloat(currentValue.toFixed(2)),
+              gain: parseFloat(totalGain.toFixed(2)),
+              name: "Gold",
+              gainPercent: parseFloat(gainPercent.toFixed(2)),
+            };
+          } catch (err) {
+            console.error(`Failed to fetch price for Gold (GC=F):`, err.message);
+            return { ...gold, livePricePerGram: null, currentValue: null, totalGain: null, gainPercent: null, error: "Price fetch failed" };
+          }
+        })
+      );
       let goldSummary = { value: 0, gain: 0, name: "Gold" };
       try {
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=2d`;
@@ -399,7 +427,8 @@ export const getDashboard = async (req, res) => {
 
       const allHoldings = [
           ...enrichedStocks,
-          goldSummary,
+          // goldSummary,
+          ...enrichedGold,
           ...enrichedCash,
           ...enrichedBonds,
       ].sort((a, b) => b.gain - a.gain);
